@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Buy APYX</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0c0c0c;
+            color: white;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .card {
+            background: #1b1b1b;
+            padding: 25px;
+            width: 420px;
+            margin: auto;
+            border-radius: 14px;
+            box-shadow: 0 0 15px #111;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #4caf50;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #3e8e41;
+        }
+
+        input {
+            margin-top: 15px;
+            padding: 10px;
+            width: 80%;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #7eff9c;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Buy Alephyx (APYX) Testnet Tokens</h1>
+<p>Value: <b>0.001 Sepolia ETH = 1 APYX</b></p>
+
+<div class="card">
+
+    <button id="connectBtn">Connect MetaMask</button>
+    <p id="wallet"></p>
+
+    <h3>Buy Tokens</h3>
+    <input type="number" id="ethAmount" step="0.0001" placeholder="Amount in ETH">
+    <br><br>
+    <button id="buyBtn">Buy APYX</button>
+
+    <p id="status"></p>
+</div>
+
+<script>
+window.onload = function() {
+    const contractAddress = "0xFF2a2F72aC743db64E645694479548f821363e97";
+
+    const abi = [
+        {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+        {"inputs":[],"name":"PRICE_PER_TOKEN","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"TOTAL_SUPPLY","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"sellToken","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"}
+    ];
+
+    let provider;
+    let signer;
+    let userAddress;
+
+    // Connect MetaMask
+    document.getElementById("connectBtn").onclick = async () => {
+        try {
+            if (!window.ethereum) {
+                alert("MetaMask is not installed or reachable. Use Google Chrome.");
+                return;
+            }
+
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            signer = provider.getSigner();
+            userAddress = await signer.getAddress();
+
+            document.getElementById("wallet").innerText = "Connected: " + userAddress;
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById("status").innerText = "Error: Could not reach MetaMask.";
+        }
+    };
+
+    // Buy tokens
+    document.getElementById("buyBtn").onclick = async () => {
+        try {
+            if (!signer) {
+                alert("Connect MetaMask first.");
+                return;
+            }
+
+            const ethAmount = document.getElementById("ethAmount").value;
+
+            if (ethAmount <= 0) {
+                alert("Enter a valid amount of ETH.");
+                return;
+            }
+
+            const tx = await signer.sendTransaction({
+                to: contractAddress,
+                value: ethers.utils.parseEther(ethAmount)
+            });
+
+            document.getElementById("status").innerText = "Processing purchase...";
+
+            await tx.wait();
+
+            document.getElementById("status").innerText = "Purchase complete. Sending APYX...";
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById("status").innerText = "Error trying to buy APYX.";
+        }
+    };
+
+    if (window.ethereum) {
+        window.ethereum.on("accountsChanged", () => {
+            document.getElementById("wallet").innerText = "";
+            signer = null;
+        });
+    }
+};
+</script>
+
+</body>
+</html>
